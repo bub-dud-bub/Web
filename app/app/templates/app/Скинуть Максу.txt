@@ -1,0 +1,108 @@
+FORMS.PY
+
+class AnketaForm(forms.Form):
+    name = forms.CharField(label="Ваше имя", min_length=2, max_length=100)
+    city = forms.CharField(label="Ваш город", min_length=2, max_length=100)
+    job = forms.CharField(label="Ваш род занятий", min_length=2, max_length=100)
+    gender = forms.ChoiceField(label="Ваш пол",
+                            choices=[('1', 'Мужской'), ('2', 'Женский')],
+                            widget=forms.RadioSelect, initial=1)
+    internet = forms.ChoiceField(label="Вы пользуетесь интернетом",
+                                choices=(('1', 'Каждый день'),
+                                ('2', 'Несколько раз в день'),
+                                ('3', 'Несколько раз в неделю'),
+                                ('4', 'Несколько раз в месяц')), initial=1)
+    notice = forms.BooleanField(label='Получать новости с сайта на E-mail?', required=False)
+    email = forms.EmailField(label="Ваш E-mail", min_length=7)
+    message = forms.CharField(label="Коротко о себе", widget=forms.Textarea(attrs={'rows':12,'cols':20}))
+
+
+
+ANKETA.HTML
+<!DOCTYPE html>
+{% extends "app/layout.html" %}
+{% block content %}
+{% if form != None %}
+<br><h2>Отправьте, пожалуйста, отправленную анкету</h2><br/>
+<div>
+    <form method="post">
+        {% csrf_token %}
+        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}:</label>
+        {{ form.name }}<br><br>
+        <label for="{{ form.city.id_for_label }}">{{ form.city.label }}:</label>
+        {{ form.city }}<br>
+        <label for="{{ form.gender.id_for_label }}">{{ form.gender.label }}:</label>
+        {{ form.gender }}<br><br>
+        <label for="{{ form.job.id_for_label }}">{{ form.job.label }}:</label><br>
+        {{ form.job }}<br><br>
+        <label for="{{ form.internet.id_for_label }}">{{ form.internet.label }}:</label><br>
+        {{ form.internet }}<br><br>
+        <label for="{{ form.notice.id_for_label }}">{{ form.notice.label }}:</label>
+        {{ form.notice }}<br><br>
+        <label for="{{ form.email.id_for_label }}">{{ form.email.label }}:</label>
+        {{ form.email }}<br><br>
+        <label for="{{ form.message.id_for_label }}">{{ form.message.label }}:</label><br>
+        {{ form.message }}<br><br>
+        <input type="submit" value="Отправить">
+    </form>
+</div>
+{% else %}
+<br><h2>Благодарим за предоставленную информацию!</h2>
+<h3>Вы сообщили о себе следующее:</h3>
+<ul1>
+    <li><span1>Имя: </span1>{{ data.name }}</li>
+    <li><span1>Город: </span1>{{ data.city }}</li>
+    <li><span1>Пол: </span1>{{ data.gender }}</li>
+    <li><span1>Работа: </span1>{{ data.job }}</li>
+    <li><span1>В интернете: </span1>{{ data.internet }}</li>
+    <li><span1>Получать новости с сайта на e-mail: </span1>{{ data.notice }}</li>
+    <li><span1>Ваш e-mail: </span1>{{ data.email }}</li>
+    <li><span1>Инофрмация о себе: </span1>{{ data.message }}</li>
+</ul1>
+{% endif %}
+{% endblock %}
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+<body>
+
+</body>
+</html>
+
+
+
+VIEWES.PY
+def anketa(request):
+    assert isinstance(request, HttpRequest)
+    data = None
+    gender = {'1': 'Мужчина', '2': 'Женщина'}
+    internet = {'1': 'Каждый день', '2': 'Несколько раз в день', '3': 'Несколько раз в неделю', '4': 'Несколько раз в месяц'}
+    if request.method == 'POST':
+        form = AnketaForm(request.POST)
+        if form.is_valid():
+            data = dict()
+            data['name'] = form.cleaned_data['name']
+            data['city'] = form.cleaned_data['city']
+            data['job'] = form.cleaned_data['job']
+            data['gender'] = gender[form.cleaned_data['gender']]
+            data['internet'] = internet[form.cleaned_data['internet']]
+            if(form.cleaned_data['notice'] == True):
+                data['notice'] = 'Да'
+            else:
+                data['notice'] = 'Нет'
+            data['email'] = form.cleaned_data['email']
+            data['message'] = form.cleaned_data['message']
+            form = None
+    else:
+        form = AnketaForm()
+    return render(
+        request,
+        'app/anketa.html',
+        {
+            'form':form,
+            'data':data
+            }
+        )
